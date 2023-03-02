@@ -1,0 +1,23 @@
+version: '3'
+services:
+  app:
+    build: .
+    volumes:
+      - ./app:/app
+    ports:
+      - "${APP_PORT_EXTERNAL}:${APP_PORT_INTERNAL}"
+    environment:
+      - DB_URI=mongodb://mongodb:27017
+      - DB_NAME=${APP_DB_NAME}
+      - APP_PORT=${APP_PORT_INTERNAL}
+      - APP_LISTEN=${APP_LISTEN}
+      - APP_SECRET=${APP_SECRET}
+      - APP_HOME=${APP_HOME}
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo
+    volumes:
+      - mongodb-vol:/data/db
+volumes:
+  mongodb-vol:
