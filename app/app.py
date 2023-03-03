@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request,send_file
 from pymongo import MongoClient
 import json
 import os
@@ -124,6 +124,36 @@ def submit_job_get(job_id, linkid):
     to_return = Template(html_template).substitute(**link_dict)
     return to_return, 200
 
+@app.route('/uploadFile/<filename>', methods=['POST'])
+def upload_file(filename):
+    msg,status = verify_signature_wrapper(filename)
+    if status!='ok':
+        return msg,status
+    if 'file' not in request.files:
+        return "no file",500
+    file = request.files['file']
+    if file.filename == '':
+        return 'No selected file',500
+    if file:
+        file.save(f'/filestore/{filename}')
+        return 'File uploaded successfully',200
+    return "Upload failed",500
+
+@app.route('/getfile/<filename>', methods=['GET'])
+def get_file(filename):
+    try:
+        return send_file(filename)
+    except FileNotFoundError:
+        return "Not found",404
+
+
+@app.route('/gethtmlfile/<filename>', methods=['GET'])
+def get_file(filename):
+    try:
+        return send_file(filename)
+    except FileNotFoundError:
+        return "Not found",404
+    
 @app.route('/testconn/',methods=['GET'])
 def test_connection():
     msg,status = verify_signature_wrapper(SECRET_KEY.decode())
