@@ -1,4 +1,5 @@
-from flask import Flask, request,send_file
+from flask import Flask, request,send_file,render_template
+from werkzeug.utils import secure_filename
 from pymongo import MongoClient
 import json
 import os
@@ -8,9 +9,10 @@ import base64
 from string import Template
 import datetime
 
+
 logging.basicConfig(level=logging.INFO)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='/filestore')
 jobs = {}
 mongo_url = os.environ.get('DB_URI')
 mongo_db_name = os.environ.get('DB_NAME')
@@ -129,13 +131,11 @@ def upload_file(filename):
     msg,status = verify_signature_wrapper(filename)
     if status!='ok':
         return msg,status
-    if 'file' not in request.files:
-        return "no file",500
-    file = request.files['file']
-    if file.filename == '':
-        return 'No selected file',500
-    if file:
-        file.save(f'/filestore/{filename}')
+    file1 = request.files["file1"]
+    ftype = file1.filename.split(".")[1]
+    fname_to_save =  secure_filename(filename+"."+ftype)
+    if file1:
+        file1.save("/filestore/"+fname_to_save)
         return 'File uploaded successfully',200
     return "Upload failed",500
 
@@ -148,9 +148,9 @@ def get_file(filename):
 
 
 @app.route('/gethtmlfile/<filename>', methods=['GET'])
-def get_file(filename):
+def get_html_file(filename):
     try:
-        return send_file(filename)
+        return render_template(filename)
     except FileNotFoundError:
         return "Not found",404
     

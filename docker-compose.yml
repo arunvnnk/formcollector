@@ -22,3 +22,4 @@ services:
       - mongodb-vol:/data/db
 volumes:
   mongodb-vol:
+  server-filestore:

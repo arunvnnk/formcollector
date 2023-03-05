@@ -6,10 +6,14 @@ import datetime
 import hmac, hashlib
 import requests
 import sys
+from dotenv import load_dotenv
+from urllib3 import encode_multipart_formdata
 
-SECRET_KEY =  os.environ.get('secretkey')
-ssl_verify = not bool(os.environ.get('insecure', False))
-endpoint = os.environ.get('url').rstrip('/')
+load_dotenv(override=True)
+SECRET_KEY =  os.environ.get('APP_SECRET')
+ssl_verify = not bool(os.environ.get('insecure', True))
+endpoint = os.environ.get('SERVER_END').rstrip('/')
+
 ic = {}
 headers = {
     'X-HMAC-Signature': '',
@@ -130,8 +134,25 @@ def remove_job(jobid):
         print(response.text)
         ic.pop(jobid)
 
-fname = sys.argv[1]
-with open(fname, 'r') as file:
-    html_template = file.read()
-identities = ["iden1","iden2"]
-setup_job(html_template, identities)
+def send_file():
+    file_contents = open('html_to_send.html', 'rb').read()
+    fname = str(uuid.uuid4())
+    files = {'file1':  ('html_to_send.html',file_contents,"text/plain")}
+    url = endpoint + f"/uploadFile/{fname}"
+    print(url)
+    utc_timestamp = ret_utc_timestamp()
+    headers_to_send = ret_signed_request_header(fname,utc_timestamp)
+    body,ctype = encode_multipart_formdata(files)
+    print(body)
+    headers_to_send['content-type'] = ctype
+    resp = requests.post(url,headers=headers_to_send,data=body,verify=False)
+    print(resp.text)  
+
+def run_setup_job():
+    fname = sys.argv[1]
+    with open(fname, 'r') as file:
+        html_template = file.read()
+    identities = ["iden1","iden2"]
+    setup_job(html_template, identities)
+
+send_file()
